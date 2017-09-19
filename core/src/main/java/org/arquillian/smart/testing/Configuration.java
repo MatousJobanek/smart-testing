@@ -20,6 +20,7 @@ public class Configuration {
     private RunMode mode;
     private String applyTo;
     private boolean disabled = false;
+    private boolean isDebugEnabled = false;
 
     public static Configuration load() {
         final Configuration configuration = new Configuration();
@@ -34,6 +35,8 @@ public class Configuration {
         configuration.applyTo = System.getProperty(SMART_TESTING_APPLY_TO);
 
         configuration.disabled = Boolean.valueOf(System.getProperty(SMART_TESTING_DISABLE, "false"));
+
+        configuration.isDebugEnabled = Boolean.valueOf(System.getProperty(SMART_TESTING_DEBUG));
 
         return configuration;
     }
@@ -82,4 +85,7 @@ public class Configuration {
         return disabled;
     }
 
+    public boolean isDebugEnabled() {
+        return isDebugEnabled;
+    }
 }

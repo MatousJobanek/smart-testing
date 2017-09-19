@@ -3,10 +3,11 @@ package org.arquillian.smart.testing.vcs.git;
 import java.io.File;
 import java.util.Collection;
 import java.util.stream.Collectors;
-import org.arquillian.smart.testing.Logger;
+import org.arquillian.smart.testing.logger.Logger;
 import org.arquillian.smart.testing.TestSelection;
 import org.arquillian.smart.testing.api.TestVerifier;
 import org.arquillian.smart.testing.hub.storage.ChangeStorage;
+import org.arquillian.smart.testing.logger.Log;
 import org.arquillian.smart.testing.scm.Change;
 import org.arquillian.smart.testing.scm.ChangeType;
 import org.arquillian.smart.testing.scm.git.GitChangeResolver;
@@ -16,7 +17,7 @@ import org.arquillian.smart.testing.spi.TestExecutionPlanner;
 
 public class ChangedTestsDetector implements TestExecutionPlanner {
 
-    private static final Logger logger = Logger.getLogger();
+    private static final Logger logger = Log.getLogger();
 
     private final ChangeResolver changeResolver;
     private final ChangeStorage changeStorage;

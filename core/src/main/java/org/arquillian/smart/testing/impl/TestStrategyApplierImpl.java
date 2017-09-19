@@ -13,9 +13,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.arquillian.smart.testing.Configuration;
-import org.arquillian.smart.testing.Logger;
+import org.arquillian.smart.testing.logger.Logger;
 import org.arquillian.smart.testing.TestSelection;
 import org.arquillian.smart.testing.api.TestStrategyApplier;
+import org.arquillian.smart.testing.logger.Log;
 import org.arquillian.smart.testing.report.SmartTestingReportGenerator;
 import org.arquillian.smart.testing.spi.TestExecutionPlanner;
 
@@ -23,7 +24,7 @@ import static org.arquillian.smart.testing.Configuration.ENABLE_REPORT_PROPERTY;
 
 class TestStrategyApplierImpl implements TestStrategyApplier {
 
-    private static final Logger logger = Logger.getLogger();
+    private static final Logger logger = Log.getLogger();
     private final TestExecutionPlannerLoader testExecutionPlannerLoader;
     private final File projectDir;
     private final Configuration configuration;
