@@ -17,13 +17,18 @@ cache:
   directories:
     - $HOME/.m2
 
+env:
+  - TEST_PROFILE=units GENERATE_DOC=1
+  - TEST_PROFILE=functional TEST_BED_M2_HOME=/home/travis/.arquillian/mvn/apache-maven-3.3.9 GENERATE_DOC=1
+  - GENERATE_DOC=0
+
 before_install:
   - BRANCH=${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}
   - MODIFIED_DOCS=$(git diff --name-only $TRAVIS_COMMIT_RANGE | grep -E 'README.adoc|^docs/.*.adoc$' | wc -l)
   - COMMITS_WITH_FORCED_GEN=$(git log --format=%B  $TRAVIS_COMMIT_RANGE | grep -i "\[gen docs\]" | wc -l)
   - git describe --tags --exact-match HEAD >/dev/null 2>&1 && TAGGED=0 || TAGGED=1
-  - '[ $TAGGED -eq 0 ] || [ $COMMITS_WITH_FORCED_GEN -gt 0 ] || [ $MODIFIED_DOCS -ge 1 ] && GENERATE_DOC=0 || GENERATE_DOC=1'
-  - '[ "${BRANCH}" == "master" ] || [ ! -z "${TRAVIS_PULL_REQUEST// }"  -a "${TRAVIS_PULL_REQUEST}" != "false" ] && GENERATE_DOC=0 || GENERATE_DOC=1'
+  - '[ $TAGGED -eq 0 ] || [ $COMMITS_WITH_FORCED_GEN -gt 0 ] || [ $MODIFIED_DOCS -ge 1 ] && [ $GENERATE_DOC -eq 0 ] && GENERATE_DOC=0 || GENERATE_DOC=1'
+  - '[ "${BRANCH}" == "master" ] || [ ! -z "${TRAVIS_PULL_REQUEST// }"  -a "${TRAVIS_PULL_REQUEST}" != "false" ] && [ $GENERATE_DOC -eq 0 ] && GENERATE_DOC=0 || GENERATE_DOC=1'
   - 'if [ $GENERATE_DOC -eq 0 ]; then
       git config user.name "${GH_USER}";
       git config user.email "${GH_EMAIL}";
@@ -61,14 +66,12 @@ before_script:
       fi
   '
 
-env:
-  - TEST_BED_M2_HOME=/home/travis/.arquillian/mvn/apache-maven-3.3.9
-
 script:
-  - ./mvnw clean verify -P travis -DJAVA_OPTS="-XX:-UseLoopPredicate"
-  - 'if [ $GENERATE_DOC -eq 0 ]; then
-        ./.asciidoctor/generate.sh --keep;
-     fi'
+  - 'if [[ -n $TEST_PROFILE ]]; then
+      ./mvnw clean verify -P travis,${TEST_PROFILE} -DJAVA_OPTS="-XX:-UseLoopPredicate" -T 100;
+    elif [ $GENERATE_DOC -eq 0 ]; then
+      ./.asciidoctor/generate.sh --keep;
+    fi'
 
 after_success:
   - 'if [ $GENERATE_DOC -eq 0 ]; then

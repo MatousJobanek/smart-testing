@@ -37,7 +37,8 @@ public class BuildConfigurator {
     private boolean ignoreBuildFailure = false;
     private boolean skipTests = false;
     private File workingDirectory;
-    private String mavenOpts = "-Xms512m -Xmx1024m";
+    private String mavenOpts = "-Xms512m -Xmx1024m -XX:+TieredCompilation -XX:TieredStopAtLevel=1";
+    private boolean useThreads = true;
 
     BuildConfigurator(ProjectBuilder projectBuilder) {
         systemProperties.put("surefire.exitTimeout", "-1"); // see http://bit.ly/2vARQ5p
@@ -181,6 +182,11 @@ public class BuildConfigurator {
         return this;
     }
 
+    public BuildConfigurator useThreads(boolean useThreads){
+        this.useThreads = useThreads;
+        return this;
+    }
+
     void enableDebugOptions() {
         if (isRemoteDebugEnabled()) {
             final String debugOptions = String.format(MVN_DEBUG_AGENT, shouldSuspend(), getRemotePort());
@@ -255,6 +261,10 @@ public class BuildConfigurator {
 
     boolean isIgnoreBuildFailure() {
         return ignoreBuildFailure;
+    }
+
+    boolean useThreads(){
+        return useThreads;
     }
     
     private int getAvailableLocalPort() {

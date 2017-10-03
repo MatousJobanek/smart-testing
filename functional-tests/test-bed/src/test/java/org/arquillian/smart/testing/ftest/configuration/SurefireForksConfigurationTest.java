@@ -38,7 +38,7 @@ public class SurefireForksConfigurationTest {
 
     @Test
     public void test_with_fork_count_zero() {
-        verifyTestSuiteExecution("forkCount", "0");
+        verifyTestSuiteExecution(false, "forkCount", "0");
     }
 
     @Test
@@ -58,10 +58,14 @@ public class SurefireForksConfigurationTest {
 
     @Test
     public void test_with_fork_count_zero_not_reusing_forks() {
-        verifyTestSuiteExecution("forkCount", "0", "reuseForks", "false");
+        verifyTestSuiteExecution(false, "forkCount", "0", "reuseForks", "false");
     }
 
     private void verifyTestSuiteExecution(String... systemPropertiesPairs){
+        verifyTestSuiteExecution(true, systemPropertiesPairs);
+    }
+
+    private void verifyTestSuiteExecution(boolean useThreads, String... systemPropertiesPairs) {
         // given
         final Project project = testBed.getProject();
 
@@ -79,6 +83,7 @@ public class SurefireForksConfigurationTest {
             .options()
                 .withSystemProperties(systemPropertiesPairs)
                 .withSystemProperties(ENABLE_REPORT_PROPERTY, "true")
+                .useThreads(useThreads)
             .configure()
             .run();
         // then
