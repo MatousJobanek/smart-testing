@@ -41,7 +41,7 @@ before_install:
 
 install:
   - 'if [[ -z $TEST_PROFILE ]];
-      ./mvnw clean install -DskipTests
+      ./mvnw clean install -DskipTests;
     fi'
 
 before_script:
