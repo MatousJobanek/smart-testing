@@ -39,7 +39,10 @@ before_install:
       docker pull rochdev/alpine-asciidoctor:mini;
     fi'
 
-install: 'if [[ -z $TEST_PROFILE ]]; then true; fi'
+install:
+  - 'if [[ -z $TEST_PROFILE ]];
+      ./mvnw clean install -DskipTests
+    fi'
 
 before_script:
   - mkdir -p /home/travis/.arquillian/mvn
