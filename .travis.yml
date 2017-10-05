@@ -39,6 +39,8 @@ before_install:
       docker pull rochdev/alpine-asciidoctor:mini;
     fi'
 
+install: 'if [[ -z $TEST_PROFILE ]]; then true; fi'
+
 before_script:
   - mkdir -p /home/travis/.arquillian/mvn
   - wget https://archive.apache.org/dist/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz -P /home/travis/.arquillian/resolver/maven/download
