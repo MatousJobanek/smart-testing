@@ -120,8 +120,29 @@ public class SkipTestExecutionFunctionalTest {
 
         // then
         String capturedMavenLog = project.getMavenLog();
-        System.out.println(capturedMavenLog);
-        assertThat(capturedMavenLog).contains(SMART_TESTING_EXTENSION_DISABLED);
-        assertThat(actualTestResults.accumulatedPerTestClass()).size().isEqualTo(0);
+        softly.assertThat(capturedMavenLog).contains(SMART_TESTING_EXTENSION_DISABLED);
+        softly.assertThat(actualTestResults.accumulatedPerTestClass()).size().isEqualTo(0);
+    }
+
+    @Test
+    public void should_disable_smart_testing_and_execute_no_tests_when_test_execution_skipped_in_plugin_configuration() throws Exception {
+        // given
+        final Project project = testBed.getProject();
+
+        project
+            .applyAsCommits("configures skip test in plugin configuration.");
+
+        project.configureSmartTesting()
+                .executionOrder(AFFECTED)
+                .inMode(ORDERING)
+            .enable();
+
+        // when
+        final TestResults actualTestResults = project.build(CORE_MODULES).run();
+
+        // then
+        String capturedMavenLog = project.getMavenLog();
+        softly.assertThat(capturedMavenLog).contains(SMART_TESTING_EXTENSION_DISABLED);
+        softly.assertThat(actualTestResults.accumulatedPerTestClass()).size().isEqualTo(0);
     }
 }

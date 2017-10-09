@@ -88,7 +88,7 @@ class MavenProjectConfigurator {
 
         return testRunnerPluginConfigurations.stream()
             .filter(
-                testRunnerPlugin -> !(testRunnerPlugin.getArtifactId().equals("maven-failsafe-plugin") && isSkipITs()))
+                testRunnerPlugin -> !(testRunnerPlugin.getArtifactId().equals("maven-failsafe-plugin") && isSkipITs(model)))
             .collect(Collectors.toList());
     }
 

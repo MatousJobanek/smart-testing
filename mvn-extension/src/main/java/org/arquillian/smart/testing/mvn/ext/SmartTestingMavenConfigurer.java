@@ -11,11 +11,6 @@ import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.MavenExecutionException;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Model;
-<<<<<<< HEAD
-=======
-import org.apache.maven.project.MavenProject;
-import org.arquillian.smart.testing.Logger;
->>>>>>> fix: refactor to include skip tests property set inside plugin configuration.
 import org.arquillian.smart.testing.configuration.Configuration;
 import org.arquillian.smart.testing.hub.storage.ChangeStorage;
 import org.arquillian.smart.testing.hub.storage.local.LocalChangeStorage;
@@ -30,10 +25,10 @@ import org.arquillian.smart.testing.scm.spi.ChangeResolver;
 import org.arquillian.smart.testing.spi.JavaSPILoader;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 import static java.util.stream.StreamSupport.stream;
 import static org.arquillian.smart.testing.configuration.Configuration.SMART_TESTING_DISABLE;
+import static org.arquillian.smart.testing.mvn.ext.MavenPropertyResolver.isSkipTestsSetInPom;
 
 @Component(role = AbstractMavenLifecycleParticipant.class,
     description = "Entry point to install and manage Smart-Testing extension. Takes care of adding needed dependencies and "
@@ -150,7 +145,6 @@ class SmartTestingMavenConfigurer extends AbstractMavenLifecycleParticipant {
         final File dumpedConfigFile = configuration.dump(Paths.get("").toFile());
         session.getAllProjects().forEach(mavenProject -> {
             if (isSkipTestsSetInPom(mavenProject)) {
-                MavenPropertyResolver.setSkipTests(true);
                 logger.info("Smart Testing is disabled. Reason: Test Execution has been skipped in %s module.",
                     mavenProject.getArtifactId());
             } else {
@@ -161,18 +155,6 @@ class SmartTestingMavenConfigurer extends AbstractMavenLifecycleParticipant {
                 }
             }
         });
-    }
-
-    private boolean isSkipTestsSetInPom(MavenProject mavenProject) {
-        String skipTestsProperty = mavenProject.getProperties().getProperty("skipTests");
-        return Boolean.valueOf(skipTestsProperty) || isSkipTestSetInPluginConfiguration(mavenProject);
-    }
-
-    private Boolean isSkipTestSetInPluginConfiguration(MavenProject mavenProject) {
-        Xpp3Dom surefirePluginConfiguration =
-            (Xpp3Dom) mavenProject.getPlugin("org.apache.maven.plugins:maven-surefire-plugin").getConfiguration();
-        Xpp3Dom skipTests = surefirePluginConfiguration.getChild("skipTests");
-        return skipTests != null && "true".equals(skipTests.getValue());
     }
 
     private boolean isFailedStrategyUsed() {
