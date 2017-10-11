@@ -28,7 +28,6 @@ import org.codehaus.plexus.component.annotations.Requirement;
 
 import static java.util.stream.StreamSupport.stream;
 import static org.arquillian.smart.testing.configuration.Configuration.SMART_TESTING_DISABLE;
-import static org.arquillian.smart.testing.mvn.ext.MavenPropertyResolver.isSkipTestsSetInPom;
 
 @Component(role = AbstractMavenLifecycleParticipant.class,
     description = "Entry point to install and manage Smart-Testing extension. Takes care of adding needed dependencies and "
@@ -144,7 +143,8 @@ class SmartTestingMavenConfigurer extends AbstractMavenLifecycleParticipant {
         final MavenProjectConfigurator mavenProjectConfigurator = new MavenProjectConfigurator(configuration);
         final File dumpedConfigFile = configuration.dump(Paths.get("").toFile());
         session.getAllProjects().forEach(mavenProject -> {
-            if (isSkipTestsSetInPom(mavenProject)) {
+            MavenPropertyResolver mavenPropertyResolver = new MavenPropertyResolver(mavenProject);
+            if (mavenPropertyResolver.isSkipTestsSetInPom()) {
                 logger.info("Smart Testing is disabled. Reason: Test Execution has been skipped in %s module.",
                     mavenProject.getArtifactId());
             } else {
