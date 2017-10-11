@@ -41,8 +41,8 @@ public class GitChangeResolver implements ChangeResolver {
 
     private final String previous;
     private final String head;
-    private final File repoRoot;
-    private final Git git;
+    private File repoRoot;
+    private Git git;
 
     public GitChangeResolver() {
         this(Paths.get("").toAbsolutePath().toFile());
@@ -62,10 +62,10 @@ public class GitChangeResolver implements ChangeResolver {
         final FileRepositoryBuilder builder = new FileRepositoryBuilder();
         try {
             this.git = new Git(builder.readEnvironment().findGitDir(dir).build());
-        } catch (IOException e) {
-            throw new IllegalArgumentException("Unable to find git repository for path " + dir.getAbsolutePath(), e);
+            this.repoRoot = git.getRepository().getDirectory().getParentFile();
+        } catch (IllegalArgumentException | IOException e) {
+            logger.warn("Unable to find git repository for path " + dir.getAbsolutePath(), e);
         }
-        this.repoRoot = git.getRepository().getDirectory().getParentFile();
     }
 
     @Override
@@ -88,7 +88,7 @@ public class GitChangeResolver implements ChangeResolver {
         try {
             final FileRepositoryBuilder builder = new FileRepositoryBuilder();
             builder.readEnvironment().findGitDir().build();
-        } catch (IOException e) {
+        } catch (IllegalArgumentException | IOException e) {
             logger.warn("Working directory is not git directory. Cause: %s", e.getMessage());
             return false;
         }
