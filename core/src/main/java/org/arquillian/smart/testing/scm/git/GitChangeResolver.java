@@ -81,9 +81,10 @@ public class GitChangeResolver implements ChangeResolver {
 
     @Override
     public Set<Change> diff() {
-        final Set<Change> allChanges = new HashSet<>();
-
-        allChanges.addAll(retrieveCommitsChanges());
+        final Set<Change> allChanges= new HashSet<>();
+        if (isAnyCommitExists()) {
+            allChanges.addAll(retrieveCommitsChanges());
+        }
         allChanges.addAll(retrieveUncommittedChanges());
 
         return allChanges;
@@ -96,6 +97,15 @@ public class GitChangeResolver implements ChangeResolver {
 
     private FileRepositoryBuilder getFileRepositoryBuilder() {
         return new FileRepositoryBuilder().readEnvironment().findGitDir(repoRoot);
+    }
+
+    private boolean isAnyCommitExists() {
+        try {
+            final ObjectId head = git.getRepository().resolve("HEAD" + ENSURE_TREE);
+            return head != null;
+        } catch (IOException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     private Set<Change> retrieveCommitsChanges() {
