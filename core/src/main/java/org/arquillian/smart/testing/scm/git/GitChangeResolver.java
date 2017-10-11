@@ -11,8 +11,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.arquillian.smart.testing.configuration.Configuration;
 import org.arquillian.smart.testing.configuration.Scm;
-import org.arquillian.smart.testing.logger.Logger;
 import org.arquillian.smart.testing.logger.Log;
+import org.arquillian.smart.testing.logger.Logger;
 import org.arquillian.smart.testing.scm.Change;
 import org.arquillian.smart.testing.scm.ChangeType;
 import org.arquillian.smart.testing.scm.spi.ChangeResolver;
@@ -59,23 +59,29 @@ public class GitChangeResolver implements ChangeResolver {
     public GitChangeResolver(File dir, String previous, String head) {
         this.previous = previous;
         this.head = head;
-        final FileRepositoryBuilder builder = new FileRepositoryBuilder();
-        try {
-            this.git = new Git(builder.readEnvironment().findGitDir(dir).build());
+        final FileRepositoryBuilder fileRepositoryBuilder = getFileRepositoryBuilder();
+        if (fileRepositoryBuilder.getGitDir() != null) {
+            try {
+                this.git = new Git(fileRepositoryBuilder.build());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             this.repoRoot = git.getRepository().getDirectory().getParentFile();
-        } catch (IllegalArgumentException | IOException e) {
-            logger.warn("Unable to find git repository for path " + dir.getAbsolutePath(), e);
+        } else {
+            logger.warn("Unable to find git repository for path " + dir.getAbsolutePath());
         }
     }
 
     @Override
     public void close() throws Exception {
-        git.close();
+        if (git != null) {
+            git.close();
+        }
     }
 
     @Override
     public Set<Change> diff() {
-        final Set<Change> allChanges= new HashSet<>();
+        final Set<Change> allChanges = new HashSet<>();
 
         allChanges.addAll(retrieveCommitsChanges());
         allChanges.addAll(retrieveUncommittedChanges());
@@ -85,14 +91,11 @@ public class GitChangeResolver implements ChangeResolver {
 
     @Override
     public boolean isApplicable() {
-        try {
-            final FileRepositoryBuilder builder = new FileRepositoryBuilder();
-            builder.readEnvironment().findGitDir().build();
-        } catch (IllegalArgumentException | IOException e) {
-            logger.warn("Working directory is not git directory. Cause: %s", e.getMessage());
-            return false;
-        }
-        return true;
+        return getFileRepositoryBuilder().getGitDir() != null;
+    }
+
+    private FileRepositoryBuilder getFileRepositoryBuilder() {
+        return new FileRepositoryBuilder().readEnvironment().findGitDir(repoRoot);
     }
 
     private Set<Change> retrieveCommitsChanges() {
@@ -111,15 +114,17 @@ public class GitChangeResolver implements ChangeResolver {
             final List<DiffEntry> commitDiffs = git.diff().setNewTree(newTree).setOldTree(oldTree).call();
             return transformToChangeSet(reduceToRenames(commitDiffs), repoRoot);
         } catch (MissingObjectException e) {
-            throw new IllegalArgumentException(format(WRONG_COMMIT_ID_EXCEPTION, e.getObjectId().getName(), repository.getDirectory().getAbsolutePath()));
-        }catch (IOException | GitAPIException e) {
+            throw new IllegalArgumentException(format(WRONG_COMMIT_ID_EXCEPTION, e.getObjectId().getName(),
+                repository.getDirectory().getAbsolutePath()));
+        } catch (IOException | GitAPIException e) {
             throw new IllegalStateException(e);
         }
     }
 
     private void validateCommitExists(ObjectId retrievedId, String id, Repository repository) {
         if (retrievedId == null) {
-            throw new IllegalArgumentException(format(WRONG_COMMIT_ID_EXCEPTION, id, repository.getDirectory().getAbsolutePath()));
+            throw new IllegalArgumentException(
+                format(WRONG_COMMIT_ID_EXCEPTION, id, repository.getDirectory().getAbsolutePath()));
         }
     }
 
@@ -180,5 +185,4 @@ public class GitChangeResolver implements ChangeResolver {
             })
             .collect(Collectors.toSet());
     }
-
 }
