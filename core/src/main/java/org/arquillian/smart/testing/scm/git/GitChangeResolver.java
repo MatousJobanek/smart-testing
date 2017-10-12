@@ -59,7 +59,7 @@ public class GitChangeResolver implements ChangeResolver {
     public GitChangeResolver(File dir, String previous, String head) {
         this.previous = previous;
         this.head = head;
-        final FileRepositoryBuilder fileRepositoryBuilder = getFileRepositoryBuilder();
+        final FileRepositoryBuilder fileRepositoryBuilder = getFileRepositoryBuilder(dir);
         if (fileRepositoryBuilder.getGitDir() != null) {
             try {
                 this.git = new Git(fileRepositoryBuilder.build());
@@ -68,7 +68,8 @@ public class GitChangeResolver implements ChangeResolver {
             }
             this.repoRoot = git.getRepository().getDirectory().getParentFile();
         } else {
-            logger.warn("Unable to find git repository for path " + dir.getAbsolutePath());
+            logger.warn(String.format("Unable to find a git repository for the path %s - some strategies won't work properly."
+                + " Make sure it is a git repository.", dir.getAbsolutePath()));
         }
     }
 
@@ -80,8 +81,13 @@ public class GitChangeResolver implements ChangeResolver {
     }
 
     @Override
-    public Set<Change> diff() {
-        final Set<Change> allChanges= new HashSet<>();
+    public Set<Change> diff(String strategy) {
+        final Set<Change> allChanges = new HashSet<>();
+        if (!strategy.isEmpty() && git == null) {
+            throw new IllegalStateException(
+                String.format("strategy %s needs scm to be initialized. Git is not initialized. "
+                    + "Please initialize git using `git init`", strategy));
+        }
         if (isAnyCommitExists()) {
             allChanges.addAll(retrieveCommitsChanges());
         }
@@ -92,11 +98,11 @@ public class GitChangeResolver implements ChangeResolver {
 
     @Override
     public boolean isApplicable() {
-        return getFileRepositoryBuilder().getGitDir() != null;
+        return getFileRepositoryBuilder(repoRoot).getGitDir() != null;
     }
 
-    private FileRepositoryBuilder getFileRepositoryBuilder() {
-        return new FileRepositoryBuilder().readEnvironment().findGitDir(repoRoot);
+    private FileRepositoryBuilder getFileRepositoryBuilder(File currentGitDir) {
+        return new FileRepositoryBuilder().readEnvironment().findGitDir(currentGitDir);
     }
 
     private boolean isAnyCommitExists() {
@@ -124,8 +130,7 @@ public class GitChangeResolver implements ChangeResolver {
             final List<DiffEntry> commitDiffs = git.diff().setNewTree(newTree).setOldTree(oldTree).call();
             return transformToChangeSet(reduceToRenames(commitDiffs), repoRoot);
         } catch (MissingObjectException e) {
-            throw new IllegalArgumentException(format(WRONG_COMMIT_ID_EXCEPTION, e.getObjectId().getName(),
-                repository.getDirectory().getAbsolutePath()));
+            throw new IllegalArgumentException(format(WRONG_COMMIT_ID_EXCEPTION, e.getObjectId().getName(), repository.getDirectory().getAbsolutePath()));
         } catch (IOException | GitAPIException e) {
             throw new IllegalStateException(e);
         }
@@ -133,8 +138,7 @@ public class GitChangeResolver implements ChangeResolver {
 
     private void validateCommitExists(ObjectId retrievedId, String id, Repository repository) {
         if (retrievedId == null) {
-            throw new IllegalArgumentException(
-                format(WRONG_COMMIT_ID_EXCEPTION, id, repository.getDirectory().getAbsolutePath()));
+            throw new IllegalArgumentException(format(WRONG_COMMIT_ID_EXCEPTION, id, repository.getDirectory().getAbsolutePath()));
         }
     }
 

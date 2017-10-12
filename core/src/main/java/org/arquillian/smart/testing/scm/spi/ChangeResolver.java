@@ -5,7 +5,7 @@ import org.arquillian.smart.testing.scm.Change;
 
 public interface ChangeResolver extends AutoCloseable {
 
-    Collection<Change> diff();
+    Collection<Change> diff(String strategy);
 
     boolean isApplicable();
 

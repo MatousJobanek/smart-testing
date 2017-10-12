@@ -46,7 +46,7 @@ public class ChangedTestsDetector implements TestExecutionPlanner {
         final Collection<Change> files = changeStorage.read()
             .orElseGet(() -> {
                 logger.warn("No cached changes detected... using direct resolution");
-                return changeResolver.diff();
+                return changeResolver.diff(getName());
             });
 
         return files.stream()

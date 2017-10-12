@@ -16,6 +16,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,7 +26,12 @@ import static org.assertj.core.api.Assertions.tuple;
 public class GitChangeResolverTest {
 
     @Rule
-    public final TemporaryFolder gitFolder = new TemporaryFolder();
+    public final TemporaryFolder gitFolder = new TemporaryFolder(new File("/tmp"));
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
+    public static final String CUSTOM = "custom";
 
     private GitChangeResolver gitChangeResolver;
 
@@ -46,7 +52,7 @@ public class GitChangeResolverTest {
         this.gitChangeResolver = new GitChangeResolver(gitFolder.getRoot(), "32bd752", "07b181b");
 
         // when
-        final Set<Change> diff = gitChangeResolver.diff();
+        final Set<Change> diff = gitChangeResolver.diff(CUSTOM);
 
         // then
         assertThat(diff).hasSize(1).extracting(Change::getLocation, Change::getChangeType).containsOnly(tuple(
@@ -59,7 +65,7 @@ public class GitChangeResolverTest {
         this.gitChangeResolver = new GitChangeResolver(gitFolder.getRoot(), "d923b3a", "1ee4abf");
 
         // when
-        final Set<Change> diff = gitChangeResolver.diff();
+        final Set<Change> diff = gitChangeResolver.diff(CUSTOM);
 
         // then
         assertThat(diff).hasSize(18);
@@ -81,13 +87,29 @@ public class GitChangeResolverTest {
     }
 
     @Test
+    public void should_throw_exception_for_fetching_all_changes_when_git_repository_is_not_initialized()
+        throws IOException {
+        // given
+        gitFolder.delete();
+        gitFolder.create();
+
+        this.gitChangeResolver = new GitChangeResolver(gitFolder.getRoot(), "HEAD", "HEAD~0");
+
+        // then
+        thrown.expect(IllegalStateException.class);
+
+        // when
+        gitChangeResolver.diff(CUSTOM);
+    }
+
+    @Test
     public void should_fetch_all_untracked_files() throws IOException {
         // given
         gitFolder.newFile("untracked.txt");
         this.gitChangeResolver = new GitChangeResolver(gitFolder.getRoot(), "HEAD", "HEAD");
 
         // when
-        final Set<Change> untrackedChanges = gitChangeResolver.diff();
+        final Set<Change> untrackedChanges = gitChangeResolver.diff(CUSTOM);
 
         // then
         assertThat(untrackedChanges).hasSize(1).extracting(Change::getLocation, Change::getChangeType).containsOnly(tuple(
@@ -104,12 +126,13 @@ public class GitChangeResolverTest {
 
         try (Git git = Git.init()
             .setDirectory(newGitFolder)
-            .call()) {}
+            .call()) {
+        }
 
         this.gitChangeResolver = new GitChangeResolver(newGitFolder, "HEAD~0", "HEAD");
 
         // when
-        final Set<Change> untrackedChanges = gitChangeResolver.diff();
+        final Set<Change> untrackedChanges = gitChangeResolver.diff(CUSTOM);
 
         // then
         assertThat(untrackedChanges).hasSize(1).extracting(Change::getLocation, Change::getChangeType).containsOnly(tuple(
@@ -124,7 +147,7 @@ public class GitChangeResolverTest {
         GitRepositoryOperations.addFile(gitFolder.getRoot(), "newadd.txt");
 
         // when
-        final Set<Change> newStagedChanges = gitChangeResolver.diff();
+        final Set<Change> newStagedChanges = gitChangeResolver.diff(CUSTOM);
 
         // then
         assertThat(newStagedChanges).hasSize(1).extracting(Change::getLocation, Change::getChangeType).containsOnly(tuple(
@@ -139,7 +162,7 @@ public class GitChangeResolverTest {
         Files.write(readme, "More".getBytes(), StandardOpenOption.APPEND);
 
         // when
-        final Set<Change> modifiedChanges = gitChangeResolver.diff();
+        final Set<Change> modifiedChanges = gitChangeResolver.diff(CUSTOM);
 
         // then
         assertThat(modifiedChanges).hasSize(1).extracting(Change::getLocation, Change::getChangeType).containsOnly(tuple(
@@ -152,7 +175,7 @@ public class GitChangeResolverTest {
         this.gitChangeResolver = new GitChangeResolver(gitFolder.getRoot(), "a34a06478ef3957c866cff3f546f2c55c1a39364", "07b181b");
 
         // when
-        final Throwable throwable = catchThrowable(() -> gitChangeResolver.diff());
+        final Throwable throwable = catchThrowable(() -> gitChangeResolver.diff(CUSTOM));
 
         // then
         assertThat(throwable).isInstanceOf(IllegalArgumentException.class).hasMessageStartingWith("Commit id 'a34a06478ef3957c866cff3f546f2c55c1a39364' is not found in");
@@ -164,7 +187,7 @@ public class GitChangeResolverTest {
         this.gitChangeResolver = new GitChangeResolver(gitFolder.getRoot(), "07b181b", "e195e3767591fbd041e041877c541229afaac3c9");
 
         // when
-        final Throwable throwable = catchThrowable(() -> gitChangeResolver.diff());
+        final Throwable throwable = catchThrowable(() -> gitChangeResolver.diff(CUSTOM));
 
         // then
         assertThat(throwable).isInstanceOf(IllegalArgumentException.class).hasMessageStartingWith("Commit id 'e195e3767591fbd041e041877c541229afaac3c9' is not found in");
@@ -176,7 +199,7 @@ public class GitChangeResolverTest {
         this.gitChangeResolver = new GitChangeResolver(gitFolder.getRoot(), "null", "07b181b");
 
         // when
-        final Throwable throwable = catchThrowable(() -> gitChangeResolver.diff());
+        final Throwable throwable = catchThrowable(() -> gitChangeResolver.diff(CUSTOM));
 
         // then
         assertThat(throwable).isInstanceOf(IllegalArgumentException.class).hasMessageStartingWith("Commit id 'null' is not found in");
@@ -188,7 +211,7 @@ public class GitChangeResolverTest {
         this.gitChangeResolver = new GitChangeResolver(gitFolder.getRoot(), "", "07b181b");
 
         // when
-        final Throwable throwable = catchThrowable(() -> gitChangeResolver.diff());
+        final Throwable throwable = catchThrowable(() -> gitChangeResolver.diff(CUSTOM));
 
         // then
         assertThat(throwable).isInstanceOf(IllegalArgumentException.class).hasMessageStartingWith("Commit id '' is not found in");

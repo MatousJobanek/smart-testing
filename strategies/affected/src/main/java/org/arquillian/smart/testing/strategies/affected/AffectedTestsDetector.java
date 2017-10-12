@@ -6,11 +6,11 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.arquillian.smart.testing.logger.Logger;
 import org.arquillian.smart.testing.TestSelection;
 import org.arquillian.smart.testing.api.TestVerifier;
 import org.arquillian.smart.testing.hub.storage.ChangeStorage;
 import org.arquillian.smart.testing.logger.Log;
+import org.arquillian.smart.testing.logger.Logger;
 import org.arquillian.smart.testing.scm.Change;
 import org.arquillian.smart.testing.scm.spi.ChangeResolver;
 import org.arquillian.smart.testing.spi.JavaSPILoader;
@@ -61,7 +61,7 @@ public class AffectedTestsDetector implements TestExecutionPlanner {
         final Collection<Change> files = changeStorage.read()
             .orElseGet(() -> {
                 logger.warn("No cached changes detected... using direct resolution");
-                return changeResolver.diff();
+                return changeResolver.diff(getName());
             });
 
         logger.debug("Time To Build Affected Dependencies Graph %d ms", (System.currentTimeMillis() - beforeDetection));

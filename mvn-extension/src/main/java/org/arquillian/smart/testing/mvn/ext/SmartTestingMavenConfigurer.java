@@ -124,11 +124,13 @@ class SmartTestingMavenConfigurer extends AbstractMavenLifecycleParticipant {
     private void calculateChanges() {
         final Iterable<ChangeResolver> changeResolvers =
             new JavaSPILoader().all(ChangeResolver.class, ChangeResolver::isApplicable);
-        final Collection<Change> changes = stream(changeResolvers.spliterator(), false).map(ChangeResolver::diff)
+        final Collection<Change> changes = stream(changeResolvers.spliterator(), false)
+            .map(changeResolver -> changeResolver.diff(""))
             .flatMap(Collection::stream)
             .collect(Collectors.toSet());
-
-        changeStorage.store(changes);
+        if (!changes.isEmpty()) {
+            changeStorage.store(changes);
+        }
     }
 
     private void configureExtension(MavenSession session, Configuration configuration) {
