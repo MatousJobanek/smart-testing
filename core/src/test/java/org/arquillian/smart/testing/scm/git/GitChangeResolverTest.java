@@ -16,7 +16,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,10 +25,7 @@ import static org.assertj.core.api.Assertions.tuple;
 public class GitChangeResolverTest {
 
     @Rule
-    public final TemporaryFolder gitFolder = new TemporaryFolder(new File("/tmp"));
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
+    public final TemporaryFolder gitFolder = new TemporaryFolder();
 
     public static final String CUSTOM = "custom";
 
@@ -69,37 +65,6 @@ public class GitChangeResolverTest {
 
         // then
         assertThat(diff).hasSize(18);
-    }
-
-    @Test
-    public void should_not_applicable_when_git_repository_is_not_initialized() throws IOException {
-        // given
-        gitFolder.delete();
-        gitFolder.create();
-
-        this.gitChangeResolver = new GitChangeResolver(gitFolder.getRoot(), "HEAD", "HEAD~0");
-
-        // when
-        final boolean applicable = gitChangeResolver.isApplicable();
-
-        // then
-        assertThat(applicable).isFalse();
-    }
-
-    @Test
-    public void should_throw_exception_for_fetching_all_changes_when_git_repository_is_not_initialized()
-        throws IOException {
-        // given
-        gitFolder.delete();
-        gitFolder.create();
-
-        this.gitChangeResolver = new GitChangeResolver(gitFolder.getRoot(), "HEAD", "HEAD~0");
-
-        // then
-        thrown.expect(IllegalStateException.class);
-
-        // when
-        gitChangeResolver.diff(CUSTOM);
     }
 
     @Test

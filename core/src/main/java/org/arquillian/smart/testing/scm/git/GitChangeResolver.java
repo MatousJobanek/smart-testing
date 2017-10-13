@@ -81,12 +81,21 @@ public class GitChangeResolver implements ChangeResolver {
     }
 
     @Override
+    public Set<Change> diff() {
+        return diff("");
+    }
+
+    @Override
     public Set<Change> diff(String strategy) {
         final Set<Change> allChanges = new HashSet<>();
-        if (!strategy.isEmpty() && git == null) {
-            throw new IllegalStateException(
-                String.format("strategy %s needs scm to be initialized. Git is not initialized. "
-                    + "Please initialize git using `git init`", strategy));
+        if (git == null) {
+            if (strategy != null && !strategy.isEmpty()) {
+                throw new IllegalStateException(
+                    String.format("strategy %s needs scm to be initialized. Git is not initialized. "
+                        + "Please initialize git using `git init`", strategy));
+            } else {
+                return allChanges;
+            }
         }
         if (isAnyCommitExists()) {
             allChanges.addAll(retrieveCommitsChanges());
