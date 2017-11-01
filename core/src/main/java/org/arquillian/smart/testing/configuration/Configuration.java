@@ -150,6 +150,10 @@ public class Configuration implements ConfigurationSection {
     }
 
     public void loadStrategyConfigurations(String... strategies) {
+        this.strategiesConfiguration = getStrategiesConfigurations(strategies);
+    }
+
+    private List<StrategyConfiguration> getStrategiesConfigurations(String... strategies) {
         List<StrategyConfiguration> convertedList = new ArrayList<>();
 
         StreamSupport.stream(new JavaSPILoader().all(TestExecutionPlannerFactory.class).spliterator(), false)
@@ -168,7 +172,7 @@ public class Configuration implements ConfigurationSection {
                 convertedList.add(mapToObject(strategyConfigurationClass, strategyConfigMap));
             });
 
-        this.strategiesConfiguration = convertedList;
+        return convertedList;
     }
 
     public File dump(File rootDir) {
@@ -212,6 +216,11 @@ public class Configuration implements ConfigurationSection {
         return this.strategiesConfiguration.stream()
             .filter(strategyConfiguration -> strategyName.equals(strategyConfiguration.name()))
             .findFirst()
-            .get();
+            .orElseGet(() ->
+                getStrategiesConfigurations(strategyName)
+                    .stream()
+                    .findFirst()
+                    .orElseThrow(() ->
+                        new RuntimeException("The configuration of strategy " + strategyName + " is not available")));
     }
 }
