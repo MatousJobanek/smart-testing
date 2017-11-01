@@ -78,7 +78,7 @@ public class SkipTestExecutionFunctionalTest {
                 .options()
                     .skipTests(true)
                 .configure()
-            .run();
+            .run("clean", "verify");
 
         // then
         String capturedMavenLog = project.getMavenLog();
